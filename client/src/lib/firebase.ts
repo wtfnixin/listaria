@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
   updateProfile,
   User,
 } from "firebase/auth";
@@ -26,6 +28,7 @@ if (!isValidConfig) {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export const loginWithEmail = async (email: string, password: string) => {
   try {
@@ -53,6 +56,18 @@ export const registerWithEmail = async (
     return userCredential;
   } catch (error: any) {
     console.error('Registration error:', error.code, error.message);
+    throw error;
+  }
+};
+
+export const loginWithGoogle = async () => {
+  try {
+    console.log('Starting Google sign-in...');
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log('Google sign-in successful');
+    return result;
+  } catch (error: any) {
+    console.error('Google sign-in error:', error.code, error.message);
     throw error;
   }
 };

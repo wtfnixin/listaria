@@ -4,6 +4,7 @@ import {
   auth,
   loginWithEmail,
   registerWithEmail,
+  loginWithGoogle,
   logout as firebaseLogout,
   onAuthChange,
 } from "@/lib/firebase";
@@ -15,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -94,6 +96,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginGoogleHandler = async () => {
+    try {
+      console.log("Attempting Google login...");
+      await loginWithGoogle();
+      toast({
+        title: "Welcome!",
+        description: "You have successfully signed in with Google.",
+      });
+    } catch (error: any) {
+      console.error("Google login failed:", error);
+      const errorMessage = getGoogleErrorMessage(error.code);
+      toast({
+        title: "Google Sign-In failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       console.log("Attempting logout");
@@ -120,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
+        loginGoogle: loginGoogleHandler,
         logout,
       }}
     >
@@ -150,4 +173,16 @@ function getErrorMessage(code: string): string {
     "auth/missing-password": "Password is required",
   };
   return errorMap[code] || `Error: ${code || "An error occurred. Please try again."}`;
+}
+
+function getGoogleErrorMessage(code: string): string {
+  const errorMap: Record<string, string> = {
+    "auth/configuration-not-found": "Google Sign-In is not configured. Please enable it in Firebase Console and add this domain to authorized domains.",
+    "auth/popup-blocked": "Sign-in popup was blocked. Please allow popups and try again.",
+    "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
+    "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method.",
+    "auth/cancelled-popup-request": "Sign-in was cancelled.",
+    "auth/operation-not-supported-in-this-environment": "Google Sign-In is not supported in this environment.",
+  };
+  return errorMap[code] || "Google Sign-In failed. Please try again.";
 }
