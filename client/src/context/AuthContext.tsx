@@ -177,7 +177,8 @@ function getErrorMessage(code: string): string {
 
 function getGoogleErrorMessage(code: string): string {
   const errorMap: Record<string, string> = {
-    "auth/configuration-not-found": "Google Sign-In is not configured. Please enable it in Firebase Console and add this domain to authorized domains.",
+    "auth/configuration-not-found": "Google Sign-In is not configured. Please enable it in Firebase Console.",
+    "auth/unauthorized-domain": "This domain is not authorized in Firebase. Go to Firebase Console > Authentication > Settings > Authorized domains and add this domain.",
     "auth/popup-blocked": "Sign-in popup was blocked. Please allow popups and try again.",
     "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
     "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method.",
