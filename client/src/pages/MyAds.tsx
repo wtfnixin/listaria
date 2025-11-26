@@ -32,11 +32,12 @@ export default function MyAds() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [sellModalOpen, setSellModalOpen] = useState(false);
 
-  const { data: ads = [], isLoading, refetch } = useQuery({
+  const { data: adsData, isLoading, refetch } = useQuery({
     queryKey: ["/api/ads/my"],
     queryFn: async () => {
       try {
-        return await adApi.getMyAds();
+        const result = await adApi.getMyAds();
+        return Array.isArray(result) ? result : result?.ads || [];
       } catch (error) {
         console.log("API not available, using empty array");
         return [];
@@ -44,6 +45,8 @@ export default function MyAds() {
     },
     enabled: !!user,
   });
+
+  const ads = Array.isArray(adsData) ? adsData : adsData?.ads || [];
 
   if (!user) {
     return (
