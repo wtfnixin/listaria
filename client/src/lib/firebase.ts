@@ -5,8 +5,6 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
   updateProfile,
   User,
 } from "firebase/auth";
@@ -20,12 +18,22 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Validate Firebase config
+const isValidConfig = Object.values(firebaseConfig).every(val => val !== undefined && val !== '');
+if (!isValidConfig) {
+  console.warn('Firebase configuration incomplete. Some environment variables are missing.');
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
 
 export const loginWithEmail = async (email: string, password: string) => {
-  return signInWithEmailAndPassword(auth, email, password);
+  try {
+    return await signInWithEmailAndPassword(auth, email, password);
+  } catch (error: any) {
+    console.error('Login error:', error.code, error.message);
+    throw error;
+  }
 };
 
 export const registerWithEmail = async (
@@ -33,27 +41,35 @@ export const registerWithEmail = async (
   password: string,
   displayName: string
 ) => {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password
-  );
-  if (userCredential.user) {
-    await updateProfile(userCredential.user, { displayName });
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, { displayName });
+    }
+    return userCredential;
+  } catch (error: any) {
+    console.error('Registration error:', error.code, error.message);
+    throw error;
   }
-  return userCredential;
-};
-
-export const loginWithGoogle = async () => {
-  return signInWithPopup(auth, googleProvider);
 };
 
 export const logout = async () => {
-  return signOut(auth);
+  try {
+    return await signOut(auth);
+  } catch (error: any) {
+    console.error('Logout error:', error.code, error.message);
+    throw error;
+  }
 };
 
 export const onAuthChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth, callback, (error) => {
+    console.error('Auth state change error:', error);
+  });
 };
 
 export type { User };

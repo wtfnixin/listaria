@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -39,12 +40,24 @@ export default function AuthModal({
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    if (!loginData.email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!loginData.password.trim()) {
+      setError("Password is required");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("Starting login process...");
       await login(loginData.email, loginData.password);
       onClose();
       setLoginData({ email: "", password: "" });
     } catch (error: any) {
+      console.error("Login error caught:", error);
       setError(error.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -54,29 +67,59 @@ export default function AuthModal({
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!registerData.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (!registerData.email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!registerData.password.trim()) {
+      setError("Password is required");
+      return;
+    }
     if (registerData.password !== registerData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+    if (registerData.password.length < 6) {
+      setError("Password should be at least 6 characters");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("Starting registration process...");
       await register(registerData.name, registerData.email, registerData.password);
       onClose();
       setRegisterData({ name: "", email: "", password: "", confirmPassword: "" });
     } catch (error: any) {
+      console.error("Registration error caught:", error);
       setError(error.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleClose = () => {
+    setError(null);
+    setLoginData({ email: "", password: "" });
+    setRegisterData({ name: "", email: "", password: "", confirmPassword: "" });
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-semibold" data-testid="text-auth-title">
             Welcome to Listaria
           </DialogTitle>
+          <DialogDescription className="text-center text-sm">
+            Create an account or log in to start buying and selling
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue={defaultTab} className="w-full">
@@ -139,7 +182,7 @@ export default function AuthModal({
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? (
-                      <Eye className="w-4 h-4" />
+                      <EyeOff className="w-4 h-4" />
                     ) : (
                       <Eye className="w-4 h-4" />
                     )}
@@ -226,7 +269,7 @@ export default function AuthModal({
                   <Input
                     id="register-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
+                    placeholder="Create a password (min 6 characters)"
                     className="pl-9 pr-9"
                     value={registerData.password}
                     onChange={(e) => {
@@ -246,7 +289,7 @@ export default function AuthModal({
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? (
-                      <Eye className="w-4 h-4" />
+                      <EyeOff className="w-4 h-4" />
                     ) : (
                       <Eye className="w-4 h-4" />
                     )}
@@ -303,7 +346,7 @@ export default function AuthModal({
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90" 
-                disabled={isLoading || (registerData.password !== registerData.confirmPassword)}
+                disabled={isLoading || (registerData.password !== registerData.confirmPassword) || registerData.password.length < 6}
                 data-testid="button-register-submit"
               >
                 {isLoading ? "Creating account..." : "Create Account"}
@@ -311,10 +354,6 @@ export default function AuthModal({
             </form>
           </TabsContent>
         </Tabs>
-
-        <p className="text-xs text-center text-muted-foreground mt-4">
-          Use email and password to create an account and get started!
-        </p>
       </DialogContent>
     </Dialog>
   );

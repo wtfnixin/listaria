@@ -26,7 +26,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthChange(async (firebaseUser) => {
+      if (!isMounted) return;
+
       setUser(firebaseUser);
       setLoading(false);
 
@@ -44,17 +48,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Attempting login with email:", email);
       await loginWithEmail(email, password);
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
     } catch (error: any) {
+      console.error("Login failed:", error);
       const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Login failed",
@@ -67,12 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
+      console.log("Attempting registration with email:", email);
       await registerWithEmail(email, password, name);
       toast({
         title: "Account created!",
         description: "Welcome to Listaria.",
       });
     } catch (error: any) {
+      console.error("Registration failed:", error);
       const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Registration failed",
@@ -85,12 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log("Attempting logout");
       await firebaseLogout();
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
       });
     } catch (error: any) {
+      console.error("Logout failed:", error);
       toast({
         title: "Logout failed",
         description: error.message,
@@ -133,6 +146,8 @@ function getErrorMessage(code: string): string {
     "auth/weak-password": "Password should be at least 6 characters",
     "auth/operation-not-allowed": "This operation is not allowed",
     "auth/too-many-requests": "Too many login attempts. Please try again later.",
+    "auth/missing-email": "Email is required",
+    "auth/missing-password": "Password is required",
   };
-  return errorMap[code] || "An error occurred. Please try again.";
+  return errorMap[code] || `Error: ${code || "An error occurred. Please try again."}`;
 }
