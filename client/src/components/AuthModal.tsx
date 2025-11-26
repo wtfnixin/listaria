@@ -401,7 +401,7 @@ export default function AuthModal({
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90" 
-                disabled={isLoading || (registerData.password !== registerData.confirmPassword) || registerData.password.length < 6}
+                disabled={isLoading}
                 data-testid="button-register-submit"
               >
                 {isLoading ? "Creating account..." : "Create Account"}
