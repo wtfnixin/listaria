@@ -4,7 +4,6 @@ import {
   auth,
   loginWithEmail,
   registerWithEmail,
-  loginWithGoogle,
   logout as firebaseLogout,
   onAuthChange,
 } from "@/lib/firebase";
@@ -16,7 +15,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  loginGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -57,9 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "You have successfully logged in.",
       });
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Login failed",
-        description: error.message || "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -74,26 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Welcome to Listaria.",
       });
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Registration failed",
-        description: error.message || "Could not create account",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const loginGoogle = async () => {
-    try {
-      await loginWithGoogle();
-      toast({
-        title: "Welcome!",
-        description: "You have successfully logged in with Google.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Could not sign in with Google",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -124,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
-        loginGoogle,
         logout,
       }}
     >
@@ -139,4 +121,18 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+function getErrorMessage(code: string): string {
+  const errorMap: Record<string, string> = {
+    "auth/invalid-email": "Invalid email address",
+    "auth/user-disabled": "User account has been disabled",
+    "auth/user-not-found": "Email not found. Please register first.",
+    "auth/wrong-password": "Incorrect password",
+    "auth/email-already-in-use": "Email already in use",
+    "auth/weak-password": "Password should be at least 6 characters",
+    "auth/operation-not-allowed": "This operation is not allowed",
+    "auth/too-many-requests": "Too many login attempts. Please try again later.",
+  };
+  return errorMap[code] || "An error occurred. Please try again.";
 }
