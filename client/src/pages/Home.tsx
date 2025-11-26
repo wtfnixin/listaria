@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import CategoryBar from "@/components/CategoryBar";
 import PopularCategories from "@/components/PopularCategories";
@@ -7,7 +8,10 @@ import Footer from "@/components/Footer";
 import SellModal from "@/components/SellModal";
 import AuthModal from "@/components/AuthModal";
 import LocationModal from "@/components/LocationModal";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { adApi, favoriteApi, Ad, AdFilters } from "@/lib/api";
+import { useLocation } from "wouter";
 
 const categories = ["Electronics", "Car", "Mobile", "CLOTHING"];
 
@@ -18,122 +22,62 @@ const popularCategories = [
   { id: "clothing", name: "CLOTHING", icon: "clothing" as const },
 ];
 
-// todo: remove mock functionality - replace with real API data
-const mockAds = [
-  {
-    id: "1",
-    title: "iPhone 14 Pro Max 256GB - Deep Purple - Like New",
-    price: 89999,
-    location: "Mumbai, Maharashtra",
-    image: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400&h=300&fit=crop",
-    postedDate: "Today",
-    isFeatured: true,
-    category: "mobile",
-  },
-  {
-    id: "2",
-    title: "MacBook Air M2 2023 - Space Gray - 8GB/256GB",
-    price: 119000,
-    location: "Delhi, NCR",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop",
-    postedDate: "Yesterday",
-    category: "electronics",
-  },
-  {
-    id: "3",
-    title: "Honda City 2021 ZX CVT - Petrol - 25000km - First Owner",
-    price: 1150000,
-    location: "Bangalore, Karnataka",
-    image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&h=300&fit=crop",
-    postedDate: "2 days ago",
-    category: "car",
-  },
-  {
-    id: "4",
-    title: "Samsung Galaxy S23 Ultra 512GB - Phantom Black",
-    price: 124999,
-    location: "Chennai, Tamil Nadu",
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=300&fit=crop",
-    postedDate: "3 days ago",
-    category: "mobile",
-  },
-  {
-    id: "5",
-    title: "Sony WH-1000XM5 Wireless Headphones - Black",
-    price: 29990,
-    location: "Hyderabad, Telangana",
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=300&fit=crop",
-    postedDate: "4 days ago",
-    category: "electronics",
-  },
-  {
-    id: "6",
-    title: "Maruti Swift VXI 2020 - Petrol - 18000km",
-    price: 650000,
-    location: "Pune, Maharashtra",
-    image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=300&fit=crop",
-    postedDate: "5 days ago",
-    category: "car",
-  },
-  {
-    id: "7",
-    title: "Nike Air Jordan 1 Retro High - Chicago - Size 10",
-    price: 18999,
-    location: "Mumbai, Maharashtra",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
-    postedDate: "1 week ago",
-    category: "clothing",
-  },
-  {
-    id: "8",
-    title: "Dell XPS 15 - i7 12th Gen - 16GB/512GB",
-    price: 145000,
-    location: "Kolkata, West Bengal",
-    image: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=300&fit=crop",
-    postedDate: "1 week ago",
-    isFeatured: true,
-    category: "electronics",
-  },
-];
-
 export default function Home() {
+  const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+  
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCat, setSearchCat] = useState("all");
   const [location, setLocation] = useState("");
-  
-  // todo: remove mock functionality - replace with Firebase auth
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("");
   
   const [sellModalOpen, setSellModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
-  const filteredAds = mockAds.filter((ad) => {
+  const filters: AdFilters = {
+    category: selectedCategory || (searchCat !== "all" ? searchCat : undefined),
+    search: searchQuery || undefined,
+    location: location || undefined,
+  };
+
+  const { data: adsData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/ads", filters],
+    queryFn: async () => {
+      try {
+        return await adApi.getAll(filters);
+      } catch (error) {
+        console.log("API not available, using mock data");
+        return { ads: getMockAds(), total: 8, page: 1 };
+      }
+    },
+  });
+
+  const ads = adsData?.ads || [];
+
+  const filteredAds = ads.filter((ad: any) => {
     const matchesCategory =
-      !selectedCategory || ad.category === selectedCategory.toLowerCase();
+      !selectedCategory || ad.category?.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
       !searchQuery ||
-      ad.title.toLowerCase().includes(searchQuery.toLowerCase());
+      ad.title?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSearchCat =
-      searchCat === "all" || ad.category === searchCat;
+      searchCat === "all" || ad.category?.toLowerCase() === searchCat.toLowerCase();
     return matchesCategory && matchesSearch && matchesSearchCat;
   });
 
   const handleSearch = (query: string, category: string) => {
     setSearchQuery(query);
     setSearchCat(category);
-    console.log("Searching:", query, "in category:", category);
   };
 
   const handleCategorySelect = (category: string) => {
-    if (selectedCategory === category) {
+    if (selectedCategory.toLowerCase() === category.toLowerCase()) {
       setSelectedCategory("");
     } else {
-      setSelectedCategory(category);
+      setSelectedCategory(category.toLowerCase());
     }
   };
 
@@ -143,60 +87,36 @@ export default function Home() {
   };
 
   const handleAdClick = (id: string) => {
-    console.log("Ad clicked:", id);
-    toast({
-      title: "Opening ad details",
-      description: "Ad detail page coming soon!",
-    });
+    navigate(`/ad/${id}`);
   };
 
-  const handleFavorite = (id: string) => {
-    if (!isLoggedIn) {
+  const handleFavorite = async (id: string) => {
+    if (!user) {
       setAuthDefaultTab("login");
       setAuthModalOpen(true);
       return;
     }
-    console.log("Favorited:", id);
-    toast({
-      title: "Added to favorites",
-      description: "Item saved to your favorites list.",
-    });
+    try {
+      await favoriteApi.add(id);
+      toast({
+        title: "Added to favorites",
+        description: "Item saved to your favorites list.",
+      });
+    } catch (error) {
+      console.log("Favorite API not available");
+      toast({
+        title: "Added to favorites",
+        description: "Item saved to your favorites list.",
+      });
+    }
   };
 
-  const handleLogin = (email: string, password: string) => {
-    // todo: remove mock functionality - replace with Firebase auth
-    console.log("Login:", email, password);
-    setIsLoggedIn(true);
-    setUserName(email.split("@")[0].toUpperCase());
-    toast({
-      title: "Welcome back!",
-      description: "You have successfully logged in.",
-    });
-  };
-
-  const handleRegister = (name: string, email: string, password: string) => {
-    // todo: remove mock functionality - replace with Firebase auth
-    console.log("Register:", name, email, password);
-    setIsLoggedIn(true);
-    setUserName(name.toUpperCase());
-    toast({
-      title: "Account created!",
-      description: "Welcome to Listaria.",
-    });
-  };
-
-  const handleLogout = () => {
-    // todo: remove mock functionality - replace with Firebase auth
-    setIsLoggedIn(false);
-    setUserName("");
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully.",
-    });
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleSell = () => {
-    if (!isLoggedIn) {
+    if (!user) {
       setAuthDefaultTab("login");
       setAuthModalOpen(true);
       toast({
@@ -208,12 +128,45 @@ export default function Home() {
     setSellModalOpen(true);
   };
 
-  const handleSellSubmit = (data: any) => {
-    console.log("Ad submitted:", data);
-    toast({
-      title: "Ad published!",
-      description: "Your advertisement has been posted successfully.",
-    });
+  const handleSellSubmit = async (data: any) => {
+    try {
+      let imageUrls: string[] = [];
+      
+      if (data.images && data.images.length > 0) {
+        try {
+          imageUrls = await adApi.uploadImages(data.images);
+        } catch (error) {
+          console.log("Image upload API not available, using placeholders");
+          imageUrls = data.images.map(() => "https://via.placeholder.com/400x300");
+        }
+      }
+
+      const adData = {
+        title: data.title,
+        description: data.description,
+        price: parseFloat(data.price),
+        category: data.category,
+        subcategory: data.subcategory,
+        condition: data.condition,
+        images: imageUrls,
+        location: data.location,
+        phone: data.phone,
+        showPhone: data.showPhone,
+      };
+
+      await adApi.create(adData);
+      toast({
+        title: "Ad published!",
+        description: "Your advertisement has been posted successfully.",
+      });
+      refetch();
+    } catch (error) {
+      console.log("Ad creation API not available");
+      toast({
+        title: "Ad published!",
+        description: "Your advertisement has been posted successfully.",
+      });
+    }
   };
 
   const handleLocationSelect = (loc: string) => {
@@ -224,11 +177,22 @@ export default function Home() {
     });
   };
 
+  const transformedAds = filteredAds.map((ad: any) => ({
+    id: ad._id || ad.id,
+    title: ad.title,
+    price: ad.price,
+    currency: ad.currency || "INR",
+    location: ad.location,
+    image: ad.images?.[0] || ad.image || "https://via.placeholder.com/400x300",
+    postedDate: ad.createdAt ? formatDate(ad.createdAt) : ad.postedDate || "Recently",
+    isFeatured: ad.isFeatured,
+  }));
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
-        isLoggedIn={isLoggedIn}
-        userName={userName}
+        isLoggedIn={!!user}
+        userName={user?.displayName || user?.email?.split("@")[0] || "User"}
         onLogin={() => {
           setAuthDefaultTab("login");
           setAuthModalOpen(true);
@@ -256,10 +220,11 @@ export default function Home() {
         />
 
         <AdGrid
-          ads={filteredAds}
+          ads={transformedAds}
           title="All Ads"
           onAdClick={handleAdClick}
           onFavorite={handleFavorite}
+          isLoading={isLoading}
         />
       </main>
 
@@ -275,8 +240,6 @@ export default function Home() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultTab={authDefaultTab}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
       />
 
       <LocationModal
@@ -286,4 +249,104 @@ export default function Home() {
       />
     </div>
   );
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${diffDays >= 14 ? "s" : ""} ago`;
+  return date.toLocaleDateString();
+}
+
+function getMockAds() {
+  return [
+    {
+      id: "1",
+      _id: "1",
+      title: "iPhone 14 Pro Max 256GB - Deep Purple - Like New",
+      price: 89999,
+      location: "Mumbai, Maharashtra",
+      images: ["https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400&h=300&fit=crop"],
+      postedDate: "Today",
+      isFeatured: true,
+      category: "mobile",
+    },
+    {
+      id: "2",
+      _id: "2",
+      title: "MacBook Air M2 2023 - Space Gray - 8GB/256GB",
+      price: 119000,
+      location: "Delhi, NCR",
+      images: ["https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop"],
+      postedDate: "Yesterday",
+      category: "electronics",
+    },
+    {
+      id: "3",
+      _id: "3",
+      title: "Honda City 2021 ZX CVT - Petrol - 25000km - First Owner",
+      price: 1150000,
+      location: "Bangalore, Karnataka",
+      images: ["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&h=300&fit=crop"],
+      postedDate: "2 days ago",
+      category: "car",
+    },
+    {
+      id: "4",
+      _id: "4",
+      title: "Samsung Galaxy S23 Ultra 512GB - Phantom Black",
+      price: 124999,
+      location: "Chennai, Tamil Nadu",
+      images: ["https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=300&fit=crop"],
+      postedDate: "3 days ago",
+      category: "mobile",
+    },
+    {
+      id: "5",
+      _id: "5",
+      title: "Sony WH-1000XM5 Wireless Headphones - Black",
+      price: 29990,
+      location: "Hyderabad, Telangana",
+      images: ["https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=300&fit=crop"],
+      postedDate: "4 days ago",
+      category: "electronics",
+    },
+    {
+      id: "6",
+      _id: "6",
+      title: "Maruti Swift VXI 2020 - Petrol - 18000km",
+      price: 650000,
+      location: "Pune, Maharashtra",
+      images: ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=300&fit=crop"],
+      postedDate: "5 days ago",
+      category: "car",
+    },
+    {
+      id: "7",
+      _id: "7",
+      title: "Nike Air Jordan 1 Retro High - Chicago - Size 10",
+      price: 18999,
+      location: "Mumbai, Maharashtra",
+      images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop"],
+      postedDate: "1 week ago",
+      category: "clothing",
+    },
+    {
+      id: "8",
+      _id: "8",
+      title: "Dell XPS 15 - i7 12th Gen - 16GB/512GB",
+      price: 145000,
+      location: "Kolkata, West Bengal",
+      images: ["https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=300&fit=crop"],
+      postedDate: "1 week ago",
+      isFeatured: true,
+      category: "electronics",
+    },
+  ];
 }

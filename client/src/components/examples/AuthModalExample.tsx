@@ -1,8 +1,9 @@
 import { useState } from "react";
 import AuthModal from "../AuthModal";
 import { Button } from "@/components/ui/button";
+import { AuthProvider } from "@/context/AuthContext";
 
-export default function AuthModalExample() {
+function AuthModalDemo() {
   const [isOpen, setIsOpen] = useState(true);
   
   return (
@@ -12,9 +13,15 @@ export default function AuthModalExample() {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         defaultTab="login"
-        onLogin={(email, password) => console.log("Login:", email, password)}
-        onRegister={(name, email, password) => console.log("Register:", name, email, password)}
       />
     </>
+  );
+}
+
+export default function AuthModalExample() {
+  return (
+    <AuthProvider>
+      <AuthModalDemo />
+    </AuthProvider>
   );
 }

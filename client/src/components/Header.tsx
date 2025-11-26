@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import { Search, MapPin, ChevronDown, User, Bell, MessageSquare, CreditCard, Heart, Receipt, Star, Briefcase, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +42,7 @@ export default function Header({
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   const handleSearch = () => {
     onSearch(searchQuery, category);
@@ -56,14 +58,14 @@ export default function Header({
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="text-2xl font-bold text-foreground flex items-center" data-testid="logo">
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="mr-1">
                 <path d="M8 8C8 5.79086 9.79086 4 12 4H20C22.2091 4 24 5.79086 24 8V24C24 26.2091 22.2091 28 20 28H12C9.79086 28 8 26.2091 8 24V8Z" fill="#B078C4"/>
                 <path d="M12 12H20M12 16H18M12 20H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </div>
-          </div>
+          </Link>
 
           <div className="hidden md:flex items-center flex-1 max-w-xl gap-2">
             <Select value={category} onValueChange={setCategory}>
@@ -125,7 +127,7 @@ export default function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem data-testid="menu-profile">
+                    <DropdownMenuItem onClick={() => navigate("/profile")} data-testid="menu-profile">
                       <User className="w-4 h-4 mr-2" />
                       My Profile
                     </DropdownMenuItem>
@@ -141,11 +143,11 @@ export default function Header({
                       <CreditCard className="w-4 h-4 mr-2" />
                       Subscription
                     </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-my-ads">
+                    <DropdownMenuItem onClick={() => navigate("/my-ads")} data-testid="menu-my-ads">
                       <Receipt className="w-4 h-4 mr-2" />
                       My Advertisement
                     </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-favorites">
+                    <DropdownMenuItem onClick={() => navigate("/favorites")} data-testid="menu-favorites">
                       <Heart className="w-4 h-4 mr-2" />
                       Favorites
                     </DropdownMenuItem>
@@ -246,7 +248,9 @@ export default function Header({
               </Button>
               {isLoggedIn ? (
                 <>
-                  <Button variant="outline" size="sm">Profile</Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/profile")}>Profile</Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/my-ads")}>My Ads</Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/favorites")}>Favorites</Button>
                   <Button variant="outline" size="sm" onClick={onLogout}>Logout</Button>
                 </>
               ) : (
