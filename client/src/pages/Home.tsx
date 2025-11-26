@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { adApi, favoriteApi, Ad, AdFilters } from "@/lib/api";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 const categories = ["Electronics", "Car", "Mobile", "CLOTHING"];
 
@@ -159,6 +160,8 @@ export default function Home() {
         title: "Ad published!",
         description: "Your advertisement has been posted successfully.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/ads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ads/my"] });
       refetch();
     } catch (error) {
       console.log("Ad creation API not available");

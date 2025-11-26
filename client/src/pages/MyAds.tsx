@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { adApi } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
 
 export default function MyAds() {
   const { user, logout } = useAuth();
@@ -125,6 +126,8 @@ export default function MyAds() {
         title: "Ad published!",
         description: "Your advertisement has been posted successfully.",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/ads"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ads/my"] });
       refetch();
     } catch (error) {
       toast({
