@@ -176,10 +176,6 @@ export default function Header({
                 <Button variant="ghost" size="sm" onClick={onLogin} data-testid="button-login">
                   Log in
                 </Button>
-                <span className="text-muted-foreground">|</span>
-                <Button variant="ghost" size="sm" onClick={onRegister} data-testid="button-register">
-                  Register
-                </Button>
               </>
             )}
 
@@ -256,7 +252,6 @@ export default function Header({
               ) : (
                 <>
                   <Button variant="outline" size="sm" onClick={onLogin}>Log in</Button>
-                  <Button variant="outline" size="sm" onClick={onRegister}>Register</Button>
                 </>
               )}
               <Button onClick={onSell} className="bg-primary">+ Sell</Button>
