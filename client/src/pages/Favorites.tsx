@@ -19,11 +19,12 @@ export default function Favorites() {
   const [, navigate] = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  const { data: favorites = [], isLoading, refetch } = useQuery({
+  const { data: favoritesData, isLoading, refetch } = useQuery({
     queryKey: ["/api/favorites"],
     queryFn: async () => {
       try {
-        return await favoriteApi.getAll();
+        const result = await favoriteApi.getAll();
+        return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("API not available, using empty array");
         return [];
@@ -31,6 +32,8 @@ export default function Favorites() {
     },
     enabled: !!user,
   });
+
+  const favorites = Array.isArray(favoritesData) ? favoritesData : [];
 
   if (!user) {
     return (
