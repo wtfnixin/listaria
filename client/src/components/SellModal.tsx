@@ -112,11 +112,61 @@ export default function SellModal({ isOpen, onClose, onSubmit }: SellModalProps)
     }
   };
 
-  const handleFiles = (files: File[]) => {
-    const newImages = [...formData.images, ...files].slice(0, 12);
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          const maxWidth = 800;
+          const maxHeight = 800;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d")!;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(
+            (blob) => {
+              const compressedFile = new File([blob!], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            0.7
+          );
+        };
+      };
+    });
+  };
+
+  const handleFiles = async (files: File[]) => {
+    const compressedFiles = await Promise.all(
+      files.map((file) => compressImage(file))
+    );
+    
+    const newImages = [...formData.images, ...compressedFiles].slice(0, 12);
     setFormData({ ...formData, images: newImages });
 
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    const newPreviews = compressedFiles.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews].slice(0, 12));
   };
 
