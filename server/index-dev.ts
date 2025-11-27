@@ -12,7 +12,7 @@ async function startDevServer() {
       host: '0.0.0.0',
       port: 5000,
       middlewareMode: false,
-      allowedHosts: 'all',
+      allowedHosts: true,
       hmr: {
         protocol: 'wss',
         host: 'localhost',
