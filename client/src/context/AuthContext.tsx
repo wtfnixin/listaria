@@ -13,7 +13,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  loginGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -88,33 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginGoogle = async () => {
-    setLoading(true);
-    try {
-      // Mock Google login
-      const mockGoogleUser: User = {
-        uid: `google-${Date.now()}`,
-        email: `user${Date.now()}@google.com`,
-        displayName: "Google User",
-        photoURL: undefined,
-      };
-      setUser(mockGoogleUser);
-      toast({
-        title: "Welcome!",
-        description: "You have successfully signed in with Google.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Google Sign-In failed",
-        description: error.message || "Could not sign in",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const logout = async () => {
     setUser(null);
     toast({
@@ -130,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
-        loginGoogle,
         logout,
       }}
     >
