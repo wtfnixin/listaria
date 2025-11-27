@@ -5,14 +5,10 @@ import CategoryBar from "@/components/CategoryBar";
 import PopularCategories from "@/components/PopularCategories";
 import AdGrid from "@/components/AdGrid";
 import Footer from "@/components/Footer";
-import SellModal from "@/components/SellModal";
-import AuthModal from "@/components/AuthModal";
 import LocationModal from "@/components/LocationModal";
-import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { adApi, favoriteApi, Ad, AdFilters } from "@/lib/api";
+import { adApi, Ad, AdFilters } from "@/lib/api";
 import { useLocation } from "wouter";
-import { queryClient } from "@/lib/queryClient";
 
 const categories = ["Electronics", "Car", "Mobile", "CLOTHING"];
 
@@ -24,7 +20,6 @@ const popularCategories = [
 ];
 
 export default function Home() {
-  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   
@@ -32,10 +27,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCat, setSearchCat] = useState("all");
   const [location, setLocation] = useState("");
-  
-  const [sellModalOpen, setSellModalOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const filters: AdFilters = {
@@ -92,84 +83,10 @@ export default function Home() {
   };
 
   const handleFavorite = async (id: string) => {
-    if (!user) {
-      setAuthDefaultTab("login");
-      setAuthModalOpen(true);
-      return;
-    }
-    try {
-      await favoriteApi.add(id);
-      toast({
-        title: "Added to favorites",
-        description: "Item saved to your favorites list.",
-      });
-    } catch (error) {
-      console.log("Favorite API not available");
-      toast({
-        title: "Added to favorites",
-        description: "Item saved to your favorites list.",
-      });
-    }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  const handleSell = () => {
-    if (!user) {
-      setAuthDefaultTab("login");
-      setAuthModalOpen(true);
-      toast({
-        title: "Login required",
-        description: "Please log in to post an advertisement.",
-      });
-      return;
-    }
-    setSellModalOpen(true);
-  };
-
-  const handleSellSubmit = async (data: any) => {
-    try {
-      let imageUrls: string[] = [];
-      
-      if (data.images && data.images.length > 0) {
-        try {
-          imageUrls = await adApi.uploadImages(data.images);
-        } catch (error) {
-          console.log("Image upload API not available, using placeholders");
-          imageUrls = data.images.map(() => "https://via.placeholder.com/400x300");
-        }
-      }
-
-      const adData = {
-        title: data.title,
-        description: data.description,
-        price: parseFloat(data.price),
-        category: data.category,
-        subcategory: data.subcategory,
-        condition: data.condition,
-        images: imageUrls,
-        location: data.location,
-        phone: data.phone,
-        showPhone: data.showPhone,
-      };
-
-      await adApi.create(adData);
-      toast({
-        title: "Ad published!",
-        description: "Your advertisement has been posted successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/ads"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/ads/my"] });
-      refetch();
-    } catch (error) {
-      console.log("Ad creation API not available");
-      toast({
-        title: "Ad published!",
-        description: "Your advertisement has been posted successfully.",
-      });
-    }
+    toast({
+      title: "Added to favorites",
+      description: "Item saved to your favorites list.",
+    });
   };
 
   const handleLocationSelect = (loc: string) => {
@@ -194,18 +111,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
-        isLoggedIn={!!user}
-        userName={user?.displayName || user?.email?.split("@")[0] || "User"}
-        onLogin={() => {
-          setAuthDefaultTab("login");
-          setAuthModalOpen(true);
-        }}
-        onRegister={() => {
-          setAuthDefaultTab("register");
-          setAuthModalOpen(true);
-        }}
-        onLogout={handleLogout}
-        onSell={handleSell}
         onSearch={handleSearch}
         onLocationClick={() => setLocationModalOpen(true)}
       />
@@ -233,22 +138,10 @@ export default function Home() {
 
       <Footer />
 
-      <SellModal
-        isOpen={sellModalOpen}
-        onClose={() => setSellModalOpen(false)}
-        onSubmit={handleSellSubmit}
-      />
-
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        defaultTab={authDefaultTab}
-      />
-
       <LocationModal
         isOpen={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}
-        onLocationSelect={handleLocationSelect}
+        onSelect={handleLocationSelect}
       />
     </div>
   );

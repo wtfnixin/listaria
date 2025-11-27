@@ -19,23 +19,11 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface HeaderProps {
-  isLoggedIn: boolean;
-  userName?: string;
-  onLogin: () => void;
-  onRegister: () => void;
-  onLogout: () => void;
-  onSell: () => void;
   onSearch: (query: string, category: string) => void;
   onLocationClick: () => void;
 }
 
 export default function Header({
-  isLoggedIn,
-  userName = "User",
-  onLogin,
-  onRegister,
-  onLogout,
-  onSell,
   onSearch,
   onLocationClick,
 }: HeaderProps) {
@@ -116,72 +104,7 @@ export default function Header({
               Add Location
             </Button>
 
-            {isLoggedIn ? (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-1" data-testid="button-user-menu">
-                      <User className="w-4 h-4" />
-                      <span className="max-w-[100px] truncate">{userName}</span>
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => navigate("/profile")} data-testid="menu-profile">
-                      <User className="w-4 h-4 mr-2" />
-                      My Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-notifications">
-                      <Bell className="w-4 h-4 mr-2" />
-                      Notification
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-chat">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Chat
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-subscription">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Subscription
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/my-ads")} data-testid="menu-my-ads">
-                      <Receipt className="w-4 h-4 mr-2" />
-                      My Advertisement
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/favorites")} data-testid="menu-favorites">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Favorites
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-transactions">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Transaction
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-reviews">
-                      <Star className="w-4 h-4 mr-2" />
-                      Reviews
-                    </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="menu-jobs">
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      Job Applications
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={onLogout} className="text-destructive" data-testid="menu-logout">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" onClick={onLogin} data-testid="button-login">
-                  Log in
-                </Button>
-              </>
-            )}
-
-            <Button onClick={onSell} className="bg-primary hover:bg-primary/90" data-testid="button-sell">
-              + Sell
-            </Button>
+            <>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
