@@ -104,8 +104,6 @@ export default function Header({
               Add Location
             </Button>
 
-            <>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1" data-testid="button-language">
@@ -165,19 +163,6 @@ export default function Header({
                 <MapPin className="w-4 h-4 mr-1" />
                 Location
               </Button>
-              {isLoggedIn ? (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/profile")}>Profile</Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/my-ads")}>My Ads</Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/favorites")}>Favorites</Button>
-                  <Button variant="outline" size="sm" onClick={onLogout}>Logout</Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" size="sm" onClick={onLogin}>Log in</Button>
-                </>
-              )}
-              <Button onClick={onSell} className="bg-primary">+ Sell</Button>
             </div>
           </div>
         )}
