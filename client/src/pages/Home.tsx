@@ -5,7 +5,9 @@ import CategoryBar from "@/components/CategoryBar";
 import PopularCategories from "@/components/PopularCategories";
 import AdGrid from "@/components/AdGrid";
 import Footer from "@/components/Footer";
+import AuthModal from "@/components/AuthModal";
 import LocationModal from "@/components/LocationModal";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { adApi, Ad, AdFilters } from "@/lib/api";
 import { useLocation } from "wouter";
@@ -20,6 +22,7 @@ const popularCategories = [
 ];
 
 export default function Home() {
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   
@@ -27,6 +30,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCat, setSearchCat] = useState("all");
   const [location, setLocation] = useState("");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const filters: AdFilters = {
@@ -111,6 +115,21 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
+        isLoggedIn={!!user}
+        userName={user?.displayName || user?.email?.split("@")[0] || "User"}
+        onLogin={() => setAuthModalOpen(true)}
+        onRegister={() => setAuthModalOpen(true)}
+        onLogout={logout}
+        onSell={() => {
+          if (!user) {
+            setAuthModalOpen(true);
+            toast({
+              title: "Login required",
+              description: "Please log in to post an advertisement.",
+            });
+            return;
+          }
+        }}
         onSearch={handleSearch}
         onLocationClick={() => setLocationModalOpen(true)}
       />
@@ -142,6 +161,12 @@ export default function Home() {
         isOpen={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}
         onSelect={handleLocationSelect}
+      />
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultTab="login"
       />
     </div>
   );

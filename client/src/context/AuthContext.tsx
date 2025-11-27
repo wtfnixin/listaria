@@ -1,15 +1,12 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import {
-  User,
-  auth,
-  loginWithEmail,
-  registerWithEmail,
-  loginWithGoogle,
-  logout as firebaseLogout,
-  onAuthChange,
-} from "@/lib/firebase";
-import { userApi } from "@/lib/api";
+import { createContext, useContext, useState, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
+
+export interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -22,117 +19,108 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock user storage
+const mockUsers: Record<string, { password: string; name: string }> = {};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const unsubscribe = onAuthChange(async (firebaseUser) => {
-      if (!isMounted) return;
-
-      setUser(firebaseUser);
-      setLoading(false);
-
-      if (firebaseUser) {
-        try {
-          await userApi.createProfile({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || "",
-            displayName: firebaseUser.displayName || "",
-            photoURL: firebaseUser.photoURL || undefined,
-          });
-        } catch (error) {
-          console.log("User profile already exists or API not available");
-        }
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, []);
-
   const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      console.log("Attempting login with email:", email);
-      await loginWithEmail(email, password);
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
+      // Mock login - check if user exists with correct password
+      if (mockUsers[email] && mockUsers[email].password === password) {
+        const newUser: User = {
+          uid: email,
+          email: email,
+          displayName: mockUsers[email].name,
+          photoURL: undefined,
+        };
+        setUser(newUser);
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+      } else {
+        throw new Error("Invalid email or password");
+      }
     } catch (error: any) {
-      console.error("Login failed:", error);
-      const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Login failed",
-        description: errorMessage,
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string) => {
+    setLoading(true);
     try {
-      console.log("Attempting registration with email:", email);
-      await registerWithEmail(email, password, name);
+      if (mockUsers[email]) {
+        throw new Error("Email already registered");
+      }
+      mockUsers[email] = { password, name };
+      const newUser: User = {
+        uid: email,
+        email: email,
+        displayName: name,
+        photoURL: undefined,
+      };
+      setUser(newUser);
       toast({
         title: "Account created!",
         description: "Welcome to Listaria.",
       });
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      const errorMessage = getErrorMessage(error.code);
       toast({
         title: "Registration failed",
-        description: errorMessage,
+        description: error.message || "Could not create account",
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loginGoogleHandler = async () => {
+  const loginGoogle = async () => {
+    setLoading(true);
     try {
-      console.log("Attempting Google login...");
-      await loginWithGoogle();
+      // Mock Google login
+      const mockGoogleUser: User = {
+        uid: `google-${Date.now()}`,
+        email: `user${Date.now()}@google.com`,
+        displayName: "Google User",
+        photoURL: undefined,
+      };
+      setUser(mockGoogleUser);
       toast({
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
     } catch (error: any) {
-      console.error("Google login failed:", error);
-      const errorMessage = getGoogleErrorMessage(error.code);
       toast({
         title: "Google Sign-In failed",
-        description: errorMessage,
+        description: error.message || "Could not sign in",
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
-    try {
-      console.log("Attempting logout");
-      await firebaseLogout();
-      toast({
-        title: "Logged out",
-        description: "You have been logged out successfully.",
-      });
-    } catch (error: any) {
-      console.error("Logout failed:", error);
-      toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      throw error;
-    }
+    setUser(null);
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+    });
   };
 
   return (
@@ -142,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
-        loginGoogle: loginGoogleHandler,
+        loginGoogle,
         logout,
       }}
     >
@@ -157,33 +145,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-function getErrorMessage(code: string): string {
-  const errorMap: Record<string, string> = {
-    "auth/invalid-email": "Invalid email address",
-    "auth/user-disabled": "User account has been disabled",
-    "auth/user-not-found": "Email not found. Please register first.",
-    "auth/wrong-password": "Incorrect password",
-    "auth/email-already-in-use": "Email already in use",
-    "auth/weak-password": "Password should be at least 6 characters",
-    "auth/operation-not-allowed": "This operation is not allowed",
-    "auth/too-many-requests": "Too many login attempts. Please try again later.",
-    "auth/missing-email": "Email is required",
-    "auth/missing-password": "Password is required",
-  };
-  return errorMap[code] || `Error: ${code || "An error occurred. Please try again."}`;
-}
-
-function getGoogleErrorMessage(code: string): string {
-  const errorMap: Record<string, string> = {
-    "auth/configuration-not-found": "Google Sign-In is not configured. Please enable it in Firebase Console.",
-    "auth/unauthorized-domain": "This domain is not authorized in Firebase. Go to Firebase Console > Authentication > Settings > Authorized domains and add this domain.",
-    "auth/popup-blocked": "Sign-in popup was blocked. Please allow popups and try again.",
-    "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
-    "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method.",
-    "auth/cancelled-popup-request": "Sign-in was cancelled.",
-    "auth/operation-not-supported-in-this-environment": "Google Sign-In is not supported in this environment.",
-  };
-  return errorMap[code] || "Google Sign-In failed. Please try again.";
 }

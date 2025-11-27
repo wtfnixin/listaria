@@ -19,11 +19,23 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface HeaderProps {
+  isLoggedIn: boolean;
+  userName?: string;
+  onLogin: () => void;
+  onRegister: () => void;
+  onLogout: () => void;
+  onSell: () => void;
   onSearch: (query: string, category: string) => void;
   onLocationClick: () => void;
 }
 
 export default function Header({
+  isLoggedIn,
+  userName = "User",
+  onLogin,
+  onRegister,
+  onLogout,
+  onSell,
   onSearch,
   onLocationClick,
 }: HeaderProps) {
@@ -104,6 +116,37 @@ export default function Header({
               Add Location
             </Button>
 
+            {isLoggedIn ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1" data-testid="button-user-menu">
+                      <User className="w-4 h-4" />
+                      <span className="max-w-[100px] truncate">{userName}</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onLogout} className="text-destructive" data-testid="menu-logout">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={onLogin} data-testid="button-login">
+                  Log in
+                </Button>
+              </>
+            )}
+
+            <Button onClick={onSell} className="bg-primary hover:bg-primary/90" data-testid="button-sell">
+              + Sell
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1" data-testid="button-language">
@@ -163,6 +206,16 @@ export default function Header({
                 <MapPin className="w-4 h-4 mr-1" />
                 Location
               </Button>
+              {isLoggedIn ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={onLogout}>Logout</Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" onClick={onLogin}>Log in</Button>
+                </>
+              )}
+              <Button onClick={onSell} className="bg-primary">+ Sell</Button>
             </div>
           </div>
         )}
