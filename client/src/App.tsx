@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import Home from "@/pages/Home";
 import AdDetails from "@/pages/AdDetails";
+import Sell from "@/pages/Sell";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/ad/:id" component={AdDetails} />
+      <Route path="/sell" component={Sell} />
       <Route component={NotFound} />
     </Switch>
   );

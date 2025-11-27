@@ -127,6 +127,18 @@ export default function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => navigate("/profile")} data-testid="menu-my-profile">
+                      <User className="w-4 h-4 mr-2" />
+                      My Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/my-ads")} data-testid="menu-my-ads">
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      My Ads
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/favorites")} data-testid="menu-favorites">
+                      <Heart className="w-4 h-4 mr-2" />
+                      Favorites
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={onLogout} className="text-destructive" data-testid="menu-logout">
                       <LogOut className="w-4 h-4 mr-2" />

@@ -129,6 +129,7 @@ export default function Home() {
             });
             return;
           }
+          navigate("/sell");
         }}
         onSearch={handleSearch}
         onLocationClick={() => setLocationModalOpen(true)}
